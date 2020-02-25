@@ -50,14 +50,18 @@ class SearchViewController: UITableViewController, UISearchBarDelegate, UISearch
         let params : [String : Any] = ["wstoken" : KeychainWrapper.standard.string(forKey: "userPassword")!, "criteriavalue" : keyword, "page" : 1]
         let FINAL_URL : String = constants.BASE_URL + constants.SEARCH_COURSES
         let queue = DispatchQueue.global(qos: .userInteractive)
-        Alamofire.request(FINAL_URL, method: .get, parameters: params, headers: self.constants.headers).responseJSON(queue : queue) { (response) in
+        
+        Alamofire.request(FINAL_URL, method: .get, parameters: params, headers: self.constants.headers).responseJSON(queue : queue) { response in
             if response.result.isSuccess {
                 let searchResults = JSON(response.value as Any)
-                for i in 0 ..< searchResults["courses"].count {
+                for item in searchResults["courses"].arrayValue {
                     let course = Course()
-                    course.courseid = searchResults["courses"][i]["id"].int!
-                    course.displayname = searchResults["courses"][i]["displayname"].string!
-                    course.faculty = searchResults["courses"][i]["contacts"][0]["fullname"].string?.capitalized ?? ""
+                    
+                    course.courseid = item["id"].intValue
+                    course.displayname = item["displayname"].stringValue
+                    let contacts = item["contacts"].arrayValue.first
+                    course.faculty = contacts?["fullname"].stringValue.capitalized ?? ""
+                    
                     self.resultArray.append(course)
                 }
             }
